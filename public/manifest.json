@@ -1,0 +1,15 @@
+{
+  "name": "DualBrain AI",
+  "short_name": "DualBrain",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "https://ui-avatars.com/api/?name=DB&background=0284c7&color=fff&size=512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
