@@ -3,13 +3,14 @@
   "short_name": "DualBrain",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0284c7",
+  "background_color": "#080d1a",
+  "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "https://ui-avatars.com/api/?name=DB&background=0284c7&color=fff&size=512",
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=512&h=512&fit=crop",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
