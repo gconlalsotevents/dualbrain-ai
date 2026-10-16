@@ -87,7 +87,17 @@
     .attach-btn { background: transparent; color: #94a3b8; border: none; padding: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
     .attach-btn:hover { color: #fff; }
     input[type="text"] { flex: 1; padding: 10px 14px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
-    .send-btn { background: transparent; color: #38bdf8; border: none; cursor: pointer; font-size: 20px; padding: 8px; }
+.send-btn { 
+      background: transparent; 
+      color: #38bdf8; 
+      border: none; 
+      cursor: pointer; 
+      font-size: 20px; 
+      padding: 6px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .mic-active { color: #ef4444 !important; }
   </style>
 </head>
@@ -156,8 +166,8 @@
   </div>
   <div class="side-item" id="installAppMenuBtn" style="display:flex; color: #38bdf8; font-weight: bold;" onclick="triggerAppInstall()">
     <span>📱</span> <span>ऐप डाउनलोड करें (Install)</span>
+  
   </div>
-</div>
 
 <script>
   const chatBox = document.getElementById("chatBox");
