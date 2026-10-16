@@ -38,6 +38,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     .history-list { display: flex; flex-direction: column; gap: 2px; }
     .history-item { padding: 10px 14px; font-size: 14px; color: #e2e8f0; border-radius: 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .history-item:hover { background: #1e293b; }
+   
 
     /* Chat Area */
     .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -135,6 +136,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     <input type="text" id="userInput" placeholder="यहाँ पूछें..." onkeydown="if(event.key === 'Enter') handleSend()" />
     <button class="send-btn" onclick="handleSend()">➤</button>
   </div>
+  <div class="side-item" id="installAppMenuBtn" style="display:none; color: #38bdf8; font-weight: bold;" onclick="triggerAppInstall()">
+    <span>📱</span> <span>ऐप डाउनलोड करें (Install)</span>
+  </div>
 </div>
 
 <script>
@@ -158,6 +162,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         .then((reg) => console.log('Service Worker registered!', reg))
         .catch((err) => console.log('Service Worker registration failed', err));
     });
+    let deferredPrompt;
+  const installAppMenuBtn = document.getElementById("installAppMenuBtn");
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Browser ke automatic banner ko rokein taki hum apna button dikha sakein
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Menu me 'Download App' button ko show kar dein
+    if (installAppMenuBtn) {
+      installAppMenuBtn.style.display = "flex";
+    }
+  });
+
+  function triggerAppInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+          if (installAppMenuBtn) installAppMenuBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      alert("यह ऐप पहले से इंस्टॉल है या आपका ब्राउज़र डायरेक्ट इंस्टॉल सपोर्ट नहीं करता। कृपया क्रोम मेनू (⋮) से 'Add to Home screen' चुनें।");
+    }
+    toggleSidebar();
+  }
   }
 
 
