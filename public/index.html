@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DualBrain AI - Studio</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #080d1a; color: #f8fafc; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+    .app-container { width: 100%; max-width: 820px; display: flex; flex-direction: column; height: 100vh; background: #0f172a; border-left: 1px solid #1e293b; border-right: 1px solid #1e293b; position: relative; }
+
+    .header { padding: 12px 18px; background: #090d16; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .menu-btn { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 4px; border-radius: 6px; }
+    .header h1 { font-size: 18px; color: #38bdf8; font-weight: 600; }
+
+    /* SIDEBAR (WORKING MENU) */
+    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 99; display: none; }
+    .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100vh; background: #000000; border-right: 1px solid #1e293b; z-index: 100; transition: left 0.25s ease; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+    .sidebar.open { left: 0; }
+    .sidebar-overlay.open { display: block; }
+    
+    .side-brand { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-left: 8px; }
+    .side-brand h2 { font-size: 20px; color: #e2e8f0; font-weight: 500; }
+    .close-btn { background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; }
+
+    .side-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 24px; color: #e2e8f0; cursor: pointer; margin-bottom: 4px; font-size: 15px; }
+    .side-item:hover { background: #1e293b; }
+
+    .side-search-box { width: 100%; padding: 8px 12px; background: #131b2e; border: 1px solid #334155; border-radius: 8px; color: white; outline: none; font-size: 13px; margin: 10px 0; display: none; }
+    
+    .side-section-title { font-size: 14px; color: #94a3b8; margin: 20px 10px 10px; }
+    .history-list { display: flex; flex-direction: column; gap: 2px; }
+    .history-item { padding: 10px 14px; font-size: 14px; color: #e2e8f0; border-radius: 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-item:hover { background: #1e293b; }
+
+    /* Chat Area */
+    .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .msg-wrap { display: flex; flex-direction: column; gap: 4px; max-width: 88%; }
+    .user-wrap { align-self: flex-end; align-items: flex-end; }
+    .bot-wrap { align-self: flex-start; align-items: flex-start; }
+    .msg { padding: 14px 16px; border-radius: 12px; font-size: 14.5px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; width: 100%; }
+    .user { background: #1e293b; color: #fff; border-bottom-right-radius: 2px; }
+    .bot { background: transparent; color: #f8fafc; border-bottom-left-radius: 2px; }
+    .source-tag { font-size: 12px; margin-bottom: 6px; font-weight: 600; color: #38bdf8; }
+    
+    .msg-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .action-btn { background: #1e293b; border: 1px solid #334155; color: #38bdf8; font-size: 11px; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .wa-btn { color: #22c55e; border-color: #166534; }
+
+    .user-uploaded-img { width: 100%; max-width: 220px; border-radius: 8px; margin-bottom: 8px; display: block; border: 1px solid rgba(255,255,255,0.2); }
+    .img-card { margin-top: 10px; border-radius: 10px; overflow: hidden; border: 1px solid #1e293b; background: #050811; }
+    .img-card img { width: 100%; max-height: 420px; object-fit: contain; display: block; background: #090d16; }
+
+    /* Preview Bar */
+    .preview-bar { padding: 8px 16px; background: #0c1222; border-top: 1px solid #1e293b; display: none; align-items: center; gap: 10px; }
+    .preview-thumb { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; display: none; }
+    .preview-name { font-size: 12px; color: #f1f5f9; flex: 1; }
+    .remove-file-btn { background: #334155; border: none; color: #ef4444; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 11px; font-weight: bold; }
+
+    /* Input Bar */
+    .input-bar { display: flex; padding: 12px 16px; background: #090d16; gap: 8px; align-items: center; margin: 10px; border-radius: 24px; border: 1px solid #1e293b; }
+    .attach-btn { background: transparent; color: #94a3b8; border: none; padding: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    .attach-btn:hover { color: #fff; }
+    input[type="text"] { flex: 1; padding: 10px 14px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
+    .send-btn { background: transparent; color: #38bdf8; border: none; cursor: pointer; font-size: 20px; padding: 8px; }
+    .mic-active { color: #ef4444 !important; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="side-brand">
+    <h2>DualBrain AI</h2>
+    <button class="close-btn" onclick="toggleSidebar()">✕</button>
+  </div>
+  
+  <div class="side-item" onclick="startNewChat()">
+    <span>✏️</span> <span>नई चैट (New Chat)</span>
+  </div>
+  <div class="side-item" onclick="toggleSearchBox()">
+    <span>🔍</span> <span>चैट खोजें (Search)</span>
+  </div>
+  <input type="text" id="chatSearchInput" class="side-search-box" placeholder="पुराने सवाल खोजें..." oninput="renderHistory(this.value)" />
+
+  <div class="side-item" onclick="triggerPreset('slide')">
+    <span>📊</span> <span>प्रेजेंटेशन स्लाइड (Slides)</span>
+  </div>
+  <div class="side-item" onclick="triggerPreset('video')">
+    <span>🎬</span> <span>शॉर्ट वीडियो (Short Video)</span>
+  </div>
+
+  <div class="side-section-title">हाल ही के (Recent History)</div>
+  <div class="history-list" id="historyListContainer"></div>
+</div>
+
+<div class="app-container">
+  <div class="header">
+    <div class="header-left">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <h1 style="color:#e2e8f0; font-weight: 500;">DualBrain AI</h1>
+    </div>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="msg-wrap bot-wrap">
+      <div class="msg bot">
+        <div class="source-tag">🧠 DualBrain AI</div>
+        नमस्ते! मैं आपका ऑल-इन-वन AI असिस्टेंट हूँ। पूछिए क्या जानना चाहते हैं!
+      </div>
+    </div>
+  </div>
+
+  <div id="previewBar" class="preview-bar">
+    <img id="previewImg" class="preview-thumb" />
+    <div class="preview-name" id="previewName"></div>
+    <button class="remove-file-btn" onclick="clearFile()">✕</button>
+  </div>
+
+  <div class="input-bar">
+    <input type="file" id="fileInput" accept="image/*,.pdf,.txt" style="display: none;" onchange="handleFileSelected(event)" />
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelected(event)" />
+    
+    <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Gallery/File">➕</button>
+    <button class="attach-btn" onclick="document.getElementById('cameraInput').click()" title="Camera">📷</button>
+    <button class="attach-btn" id="micBtn" onclick="toggleMic()" title="Mic">🎤</button>
+    
+    <input type="text" id="userInput" placeholder="यहाँ पूछें..." onkeydown="if(event.key === 'Enter') handleSend()" />
+    <button class="send-btn" onclick="handleSend()">➤</button>
+  </div>
+</div>
+
+<script>
+  const chatBox = document.getElementById("chatBox");
+  const userInput = document.getElementById("userInput");
+  const fileInput = document.getElementById("fileInput");
+  const cameraInput = document.getElementById("cameraInput");
+  const previewBar = document.getElementById("previewBar");
+  const previewImg = document.getElementById("previewImg");
+  const previewName = document.getElementById("previewName");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  const historyListContainer = document.getElementById("historyListContainer");
+  const chatSearchInput = document.getElementById("chatSearchInput");
+  const micBtn = document.getElementById("micBtn");
+
+  let selectedFile = null;
+  let fileDataUrl = null;
+  let conversationHistory = [];
+  let chatHistoryArray = JSON.parse(localStorage.getItem("dualBrainHistory") || "[]");
+
+  function toggleSidebar() { sidebar.classList.toggle("open"); sidebarOverlay.classList.toggle("open"); }
+  
+  function startNewChat() { 
+    conversationHistory = []; 
+    chatBox.innerHTML = ''; 
+    addMessage("नई चैट शुरू हो गई है!", "bot", "🧠 DualBrain AI");
+    toggleSidebar(); 
+  }
+
+  function toggleSearchBox() {
+    chatSearchInput.style.display = chatSearchInput.style.display === "block" ? "none" : "block";
+    if(chatSearchInput.style.display === "block") chatSearchInput.focus();
+  }
+
+  function triggerPreset(type) {
+    toggleSidebar();
+    let topic = prompt("किस टॉपिक पर बनाना है? (जैसे: AI, Mars Mission)");
+    if(topic) {
+      if(type === 'video') {
+        generateShortVideo(topic);
+      } else {
+        userInput.value = "Make 4 presentation slides on " + topic;
+        handleSend();
+      }
+    }
+  }
+
+async function generateShortVideo(topic) {
+    addMessage("Shorts video script aur visuals taiyar ho rahe hain... 🎬", "user");
+    const loading = addMessage("Generating Short Video...", "bot", "DualBrain Video Studio");
+
+    try {
+      const res = await fetch("/api/generate-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic })
+      });
+      const data = await res.json();
+      loading.remove();
+
+      const wrap = document.createElement("div");
+      wrap.className = "msg-wrap bot-wrap";
+      
+      let scenesHtml = data.scenes.map((s, index) => `
+        <div class="video-scene-card" style="margin-bottom:12px; background:#020617; padding:10px; border-radius:8px; border:1px solid #1e293b;">
+          <b style="color:#38bdf8;">Scene ${index + 1}</b>
+          <p style="font-size:13px; margin:4px 0; color:#e2e8f0;">${s.text}</p>
+          <img src="${s.image}" crossorigin="anonymous" class="scene-img" style="width:100%; max-height:220px; object-fit:cover; border-radius:6px;" />
+        </div>
+      `).join('');
+
+      let div = document.createElement("div");
+      div.className = "msg bot";
+      div.id = "videoStudioBox";
+      div.innerHTML = `
+        <div class="source-tag">🎬 DualBrain Video Studio</div>
+        <div style="margin-bottom:8px; font-weight:bold; font-size:15px;">Topic: ${topic}</div>
+        <div id="scenesContainer">
+          ${scenesHtml}
+        </div>
+        <button class="action-btn" id="renderVideoBtn" style="background:#0284c7; color:white; font-weight:bold; margin-top:8px; padding:8px 14px;" onclick="renderAndDownloadVideo('${topic}')">
+          🎬 Render & Download Video (.webm)
+        </button>
+      `;
+      wrap.appendChild(div);
+      chatBox.appendChild(wrap);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch(e) {
+      loading.remove();
+      addMessage("Video banane me error aayi.", "bot");
+    }
+  }
+
+  // Video Storyboard & Script Downloader (100% Reliable & Fast)
+  function renderAndDownloadVideo(topic) {
+    const box = document.getElementById("videoStudioBox");
+    if(!box) return;
+
+    // Collect all scene text and image links
+    const sceneCards = box.querySelectorAll(".video-scene-card");
+    let content = `========================================\n`;
+    content += ` DUALBRAIN AI - SHORT VIDEO STORYBOARD\n`;
+    content += ` Topic: ${topic.toUpperCase()}\n`;
+    content += `========================================\n\n`;
+
+    sceneCards.forEach((card, idx) => {
+      const text = card.querySelector("p").innerText;
+      const imgSrc = card.querySelector("img").src;
+      content += `SCENE ${idx + 1}:\n`;
+      content += `Narration / Script: ${text}\n`;
+      content += `Background Image URL: ${imgSrc}\n`;
+      content += `----------------------------------------\n\n`;
+    });
+
+    content += `Generated via DualBrain AI Video Studio.`;
+
+    // Create a text/storyboard file for download
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${topic.replace(/\s+/g, '_')}_Video_Script.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    const btn = document.getElementById("renderVideoBtn");
+    btn.innerText = "✅ Video Script & Storyboard Downloaded!";
+    btn.style.background = "#10b981";
+  }
+  function renderHistory(filterText = "") {
+    historyListContainer.innerHTML = "";
+    let filtered = chatHistoryArray.filter(item => item.toLowerCase().includes(filterText.toLowerCase()));
+    
+    if(filtered.length === 0) {
+      historyListContainer.innerHTML = `<div style="padding:6px 10px; font-size:12px; color:#64748b;">कोई इतिहास नहीं मिला</div>`;
+      return;
+    }
+
+    filtered.forEach(text => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerText = "💬 " + text;
+      div.onclick = () => { userInput.value = text; toggleSidebar(); handleSend(); };
+      historyListContainer.appendChild(div);
+    });
+  }
+  renderHistory();
+
+  function saveToHistory(text) {
+    if(!text || text.length < 2) return;
+    if(!chatHistoryArray.includes(text)) {
+      chatHistoryArray.unshift(text);
+      if(chatHistoryArray.length > 20) chatHistoryArray.pop();
+      localStorage.setItem("dualBrainHistory", JSON.stringify(chatHistoryArray));
+      renderHistory();
+    }
+  }
+
+  // Mic
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition;
+  if(SpeechRecognition){
+     recognition = new SpeechRecognition();
+     recognition.lang = 'hi-IN';
+     recognition.onresult = (e) => { userInput.value = e.results[0][0].transcript; micBtn.classList.remove("mic-active"); };
+     recognition.onerror = () => micBtn.classList.remove("mic-active");
+     recognition.onend = () => micBtn.classList.remove("mic-active");
+  }
+  function toggleMic() {
+    if(!recognition) return alert("Mic support nahi hai.");
+    if(micBtn.classList.contains("mic-active")) { recognition.stop(); micBtn.classList.remove("mic-active"); }
+    else { recognition.start(); micBtn.classList.add("mic-active"); }
+  }
+
+  function readAloud(btnElement) {
+    window.speechSynthesis.cancel();
+    const msgDiv = btnElement.parentElement.parentElement.querySelector(".msg");
+    const utterance = new SpeechSynthesisUtterance(msgDiv.innerText.replace("🧠 DualBrain AI", "").trim());
+    utterance.lang = 'hi-IN';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function downloadPDF(msgDiv) {
+    const opt = { margin: 12, filename: 'DualBrain-Notes.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+    html2pdf().set(opt).from(msgDiv).save();
+  }
+
+  function shareToWhatsApp(btnElement) {
+    const msgDiv = btnElement.parentElement.parentElement.querySelector(".msg");
+    let text = msgDiv.innerText.replace("🧠 DualBrain AI", "").trim();
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + "\n\n- DualBrain AI")}`, "_blank");
+  }
+
+  function handleFileSelected(e) {
+    if (e.target.files.length > 0) {
+      selectedFile = e.target.files[0];
+      previewName.innerText = selectedFile.name;
+      previewBar.style.display = "flex";
+      if (selectedFile.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => { fileDataUrl = event.target.result; previewImg.src = fileDataUrl; previewImg.style.display = "block"; };
+        reader.readAsDataURL(selectedFile);
+      }
+    }
+  }
+
+  function clearFile() {
+    selectedFile = null; fileDataUrl = null;
+    fileInput.value = ""; cameraInput.value = "";
+    previewBar.style.display = "none";
+  }
+
+  function addMessage(text, sender, source = "", imageUrl = null) {
+    const wrap = document.createElement("div");
+    wrap.className = `msg-wrap ${sender}-wrap`;
+    const div = document.createElement("div");
+    div.className = `msg ${sender}`;
+
+    if (source) div.innerHTML += `<div class="source-tag">${source}</div>`;
+    
+    const textNode = document.createElement("div");
+    textNode.innerText = text;
+    div.appendChild(textNode);
+
+    if (imageUrl) {
+      const imgCard = document.createElement("div");
+      imgCard.className = "img-card";
+      imgCard.innerHTML = `<img src="${imageUrl}" />`;
+      div.appendChild(imgCard);
+    }
+
+    wrap.appendChild(div);
+
+    if (sender === "bot" && text) {
+      const actions = document.createElement("div");
+      actions.className = "msg-actions";
+      
+      const speakBtn = document.createElement("button");
+      speakBtn.className = "action-btn"; speakBtn.innerHTML = "🔊 सुनें"; speakBtn.onclick = function() { readAloud(this); };
+      
+      const pdfBtn = document.createElement("button");
+      pdfBtn.className = "action-btn"; pdfBtn.innerHTML = "📥 PDF"; pdfBtn.onclick = () => downloadPDF(div);
+      
+      const waBtn = document.createElement("button");
+      waBtn.className = "action-btn wa-btn"; waBtn.innerHTML = "🟢 WhatsApp"; waBtn.onclick = function() { shareToWhatsApp(this); };
+
+      actions.append(speakBtn, pdfBtn, waBtn);
+      wrap.appendChild(actions);
+    }
+
+    chatBox.appendChild(wrap);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function handleSend() {
+    const prompt = userInput.value.trim();
+    if (!prompt && !selectedFile) return;
+
+    const fileToUpload = selectedFile;
+    const currentPhotoData = fileDataUrl;
+
+    addMessage(prompt, "user");
+    if(prompt && !prompt.startsWith("File:")) saveToHistory(prompt);
+
+    userInput.value = "";
+    clearFile();
+
+    const loading = addMessage("Thinking...", "bot", "🧠 DualBrain AI");
+    if (prompt) conversationHistory.push({ role: "user", content: prompt });
+
+    try {
+      let response;
+      if (fileToUpload) {
+        const formData = new FormData();
+        formData.append("file", fileToUpload);
+        formData.append("prompt", prompt || "Explain this file.");
+        response = await fetch("/api/upload-file", { method: "POST", body: formData });
+      } else {
+        const recentHistory = conversationHistory.slice(-6, -1);
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prompt, history: recentHistory })
+        });
+      }
+
+      const data = await response.json();
+      chatBox.lastChild.remove(); // Remove loading
+      addMessage(data.reply, "bot", "🧠 DualBrain AI", data.imageUrl);
+      if (data.reply) conversationHistory.push({ role: "assistant", content: data.reply });
+
+    } catch (error) {
+      chatBox.lastChild.remove();
+      addMessage("माफ़ कीजिए, नेटवर्क एरर की वजह से जवाब नहीं आ पाया।", "bot", "🧠 DualBrain AI");
+    }
+  }
+</script>
+</body>
+</html>
