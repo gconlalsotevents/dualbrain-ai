@@ -83,20 +83,49 @@
     .remove-file-btn { background: #334155; border: none; color: #ef4444; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 11px; font-weight: bold; }
 
     /* Input Bar */
-    .input-bar { display: flex; padding: 12px 16px; background: #090d16; gap: 8px; align-items: center; margin: 10px; border-radius: 24px; border: 1px solid #1e293b; }
-    .attach-btn { background: transparent; color: #94a3b8; border: none; padding: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-    .attach-btn:hover { color: #fff; }
-    input[type="text"] { flex: 1; padding: 10px 14px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
-.send-btn { 
+   /* Perfect Mobile & Desktop Input Bar Alignment */
+    .input-bar { 
+      display: flex; 
+      padding: 8px 12px; 
+      background: #090d16; 
+      gap: 6px; 
+      align-items: center; 
+      width: calc(100% - 20px);
+      margin: 10px auto; 
+      border-radius: 24px; 
+      border: 1px solid #1e293b; 
+    }
+    .attach-btn { 
+      background: transparent; 
+      color: #94a3b8; 
+      border: none; 
+      padding: 6px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    input[type="text"] { 
+      flex: 1; 
+      min-width: 0;
+      padding: 8px 10px; 
+      background: transparent; 
+      border: none; 
+      color: white; 
+      outline: none; 
+      font-size: 14px; 
+    }
+    .send-btn { 
       background: transparent; 
       color: #38bdf8; 
       border: none; 
       cursor: pointer; 
-      font-size: 20px; 
+      font-size: 18px; 
       padding: 6px; 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
     }
     .mic-active { color: #ef4444 !important; }
   </style>
