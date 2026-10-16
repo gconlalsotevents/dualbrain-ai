@@ -136,7 +136,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
     <input type="text" id="userInput" placeholder="यहाँ पूछें..." onkeydown="if(event.key === 'Enter') handleSend()" />
     <button class="send-btn" onclick="handleSend()">➤</button>
   </div>
-  <div class="side-item" id="installAppMenuBtn" style="display:none; color: #38bdf8; font-weight: bold;" onclick="triggerAppInstall()">
+  <div class="side-item" id="installAppMenuBtn" style="display:flex; color: #38bdf8; font-weight: bold;" onclick="triggerAppInstall()">
     <span>📱</span> <span>ऐप डाउनलोड करें (Install)</span>
   </div>
 </div>
@@ -162,18 +162,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
         .then((reg) => console.log('Service Worker registered!', reg))
         .catch((err) => console.log('Service Worker registration failed', err));
     });
-    let deferredPrompt;
-  const installAppMenuBtn = document.getElementById("installAppMenuBtn");
+let deferredPrompt;
 
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Browser ke automatic banner ko rokein taki hum apna button dikha sakein
     e.preventDefault();
     deferredPrompt = e;
-    
-    // Menu me 'Download App' button ko show kar dein
-    if (installAppMenuBtn) {
-      installAppMenuBtn.style.display = "flex";
-    }
   });
 
   function triggerAppInstall() {
@@ -181,13 +174,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-          if (installAppMenuBtn) installAppMenuBtn.style.display = 'none';
+          console.log('App installed successfully');
         }
         deferredPrompt = null;
       });
     } else {
-      alert("यह ऐप पहले से इंस्टॉल है या आपका ब्राउज़र डायरेक्ट इंस्टॉल सपोर्ट नहीं करता। कृपया क्रोम मेनू (⋮) से 'Add to Home screen' चुनें।");
+      // Agar direct prompt support na kare toh Chrome menu ka rasta dikhayein
+      alert("ऐप इंस्टॉल करने के लिए:\n1. क्रोम ब्राउज़र के ऊपर दाईं ओर दिए गए तीन डॉट्स (⋮) पर क्लिक करें।\n2. 'Install app' या 'Add to Home screen' पर क्लिक करें।");
     }
     toggleSidebar();
   }
